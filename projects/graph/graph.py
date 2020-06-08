@@ -3,43 +3,74 @@ Simple graph implementation
 """
 from util import Stack, Queue  # These may come in handy
 
+
 class Graph:
 
     """Represent a graph as a dictionary of vertices mapping labels to edges."""
+
     def __init__(self):
+        # set of edges
         self.vertices = {}
 
     def add_vertex(self, vertex_id):
         """
         Add a vertex to the graph.
         """
-        pass  # TODO
+        self.vertices[vertex_id] = set()
 
     def add_edge(self, v1, v2):
         """
         Add a directed edge to the graph.
         """
-        pass  # TODO
+        if v1 in self.vertices and v2 in self.vertices:
+            self.vertices[v1].add(v2)
+        else:
+            raise IndexError("Vertex does not exist in the graph")
 
     def get_neighbors(self, vertex_id):
         """
         Get all neighbors (edges) of a vertex.
         """
-        pass  # TODO
+        if self.vertices[vertex_id]:
+            return self.vertices[vertex_id]
+        else:
+            return None
 
     def bft(self, starting_vertex):
         """
         Print each vertex in breadth-first order
         beginning from starting_vertex.
         """
-        pass  # TODO
+        # if the node has not been visited print it and add its children to queue
+        visited = set()
+        node_queue = Queue()
+        current = starting_vertex
+        while current is not None:
+            if current not in visited:
+                if current is not None:
+                    print(current)
+                visited.add(current)
+                for neighbor in self.vertices[current]:
+                    node_queue.enqueue(neighbor)
+            current = node_queue.dequeue()
 
     def dft(self, starting_vertex):
         """
         Print each vertex in depth-first order
         beginning from starting_vertex.
         """
-        pass  # TODO
+        # Same as dbt excpet with a stack instead of a queue
+        visited = set()
+        node_stack = Stack()
+        current = starting_vertex
+        while current is not None:
+            if current not in visited:
+                if current is not None:
+                    print(current)
+                visited.add(current)
+                for neighbor in self.vertices[current]:
+                    node_stack.push(neighbor)
+            current = node_stack.pop()
 
     def dft_recursive(self, starting_vertex):
         """
@@ -48,7 +79,13 @@ class Graph:
 
         This should be done using recursion.
         """
-        pass  # TODO
+        # # I need to walk thr
+        # if self.vertices[starting_vertex]:
+        #     for vertex in self.vertices[starting_vertex]:
+        #         if vertex != starting_vertex and vertex != None:
+        #             self.dft_recursive(vertex)
+        #             print(vertex)
+        pass
 
     def bfs(self, starting_vertex, destination_vertex):
         """
@@ -56,6 +93,18 @@ class Graph:
         starting_vertex to destination_vertex in
         breath-first order.
         """
+        # Create an empty queue and enqueue A PATH TO the starting vertex ID
+        # Create a Set to store visited vertices
+        # While the queue is not empty...
+        # Dequeue the first PATH
+        # Grab the last vertex from the PATH
+        # If that vertex has not been visited...
+        # CHECK IF IT'S THE TARGET
+        # IF SO, RETURN PATH
+        # Mark it as visited...
+        # Then add A PATH TO its neighbors to the back of the queue
+        # COPY THE PATH
+        # APPEND THE NEIGHOR TO THE BACK
         pass  # TODO
 
     def dfs(self, starting_vertex, destination_vertex):
@@ -75,6 +124,7 @@ class Graph:
         This should be done using recursion.
         """
         pass  # TODO
+
 
 if __name__ == '__main__':
     graph = Graph()  # Instantiate your graph
