@@ -47,8 +47,7 @@ class Graph:
         current = starting_vertex
         while current is not None:
             if current not in visited:
-                if current is not None:
-                    print(current)
+                print(current)
                 visited.add(current)
                 for neighbor in self.vertices[current]:
                     node_queue.enqueue(neighbor)
@@ -63,10 +62,10 @@ class Graph:
         visited = set()
         node_stack = Stack()
         current = starting_vertex
+        # Refactor-> May need to compare stack size and queue size with zero
         while current is not None:
             if current not in visited:
-                if current is not None:
-                    print(current)
+                print(current)
                 visited.add(current)
                 for neighbor in self.vertices[current]:
                     node_stack.push(neighbor)
@@ -162,6 +161,8 @@ class Graph:
 
         This should be done using recursion.
         """
+        # Refactor change visited and path to None and set them here
+
         # get a list of neighbors
         neighbors = self.get_neighbors(starting_vertex)
 
