@@ -12,9 +12,9 @@ world = World()
 # You may uncomment the smaller graphs for development and testing purposes.
 # map_file = "maps/test_line.txt"
 # map_file = "maps/test_cross.txt"
-map_file = "maps/test_loop.txt"
+#map_file = "maps/test_loop.txt"
 # map_file = "maps/test_loop_fork.txt"
-# map_file = "maps/main_maze.txt"
+map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
 room_graph = literal_eval(open(map_file, "r").read())
@@ -41,69 +41,46 @@ right_dir = {'n': 'e', 'e': 's', 's': 'w', 'w': 'n'}
 # direction I am facing
 facing = 'n'
 previous_room = None
-# I need to check to see if the room I am in is in my map
+maze_finished = False
 
 
 def updateMap():
-    if player.current_room not in player_map:
-        room_exits = player.current_room.get_exits()
-        room_init_dict = {}
-        for room_exit in room_exits:
-            # if the previous room is in the opposite direcition I am facing
-            if room_exit == opposite_dir[facing]:
-                if previous_room == None:
-                    room_init_dict[room_exit] = "?"
-                else:
-                    room_init_dict[room_exit] = previous_room.id
-                    player_map[previous_room.id][facing] = player.current_room.id
-            else:
-                room_init_dict[room_exit] = "?"
-        player_map[player.current_room.id] = room_init_dict.copy()
+    """
+    Checks to see if the map exists for a room. If it doesn't it makes a blank map.
+    It then updates both the room it came from and the new room to connect to one another
+    """
+    global player_map
+    cur_room_id = player.current_room.id
+    room_exits = player.current_room.get_exits()
+
+    if cur_room_id not in player_map:
+        player_map[cur_room_id] = {}
+
+    for room_exit in room_exits:
+        if room_exit not in player_map[cur_room_id]:
+            player_map[cur_room_id][room_exit] = "?"
+        if room_exit == opposite_dir[facing] and previous_room != None:
+            player_map[cur_room_id][opposite_dir[facing]
+                                    ] = previous_room.id
+            player_map[previous_room.id][opposite_dir[room_exit]
+                                         ] = cur_room_id
 
 
 def travel(direction):
-    global previous_room
+    """
+    Moves the player in the direction of given, updates previous room,
+    and turns them with their back to the door. Then updates the map.
+    """
+    global previous_room, facing, player_map
     global facing
+    global player_map
     previous_room = player.current_room
+    traversal_path.append(direction)
     player.travel(direction)
     facing = direction
     updateMap()
 
 
-def turnRight():
-    # if the room only contains one exit, point to way I came in- opposite of facing
-    global facing
-    right = right_dir[facing]
-    left = right_dir[opposite_dir[facing]]
-    if right in player_map[player.current_room.id]:
-        facing = right
-    elif facing in player_map[player.current_room.id]:
-        facing = facing
-    elif left in player_map[player.current_room.id]:
-        facing = left
-    else:
-        facing = opposite_dir[facing]
-
-# if not I need to check the exits in the room I am in and add them to my map
-# if their is nothing in that direction I add None
-#
-# if there is  a question mark in the room I turn right until I am facing it
-# I go that way
-# if there isn't a question mark in the room I search my map for the closest one
-# I can use my shortest path algorithm for that
-# I then go to a room with one
-# I repeat until i have traversed the whole board
-
-# I need a function to update facing
-# if the player walked facing points the direction he walked
-
-
-# I need a function to return an array with the shortest path to a ?
-# look at the directions in that room
-#  and for every node that is not None
-# traverse look up the nodes in that room
-# if any node contains
-# Actually social graph might be better
 class Queue():
     def __init__(self):
         self.queue = []
@@ -123,64 +100,67 @@ class Queue():
 
 def find_unknown_path(room_number):
     """
-    Takes a user's user_id as an argument
-
-    Returns a dictionary containing every user in that user's
-    extended network with the shortest friendship path between them.
-
-    The key is the friend's ID and the value is the path.
+   Takes the room id as a variable. Returns a list directions to get to the nearest unsearched room
+   if there isn't one it tells global state it is finished running the program
     """
     visited = {}  # Note that this is a dictionary, not a set
-    # !!!! IMPLEMENT ME
+
     paths_walked = Queue()
     paths_walked.enqueue([(None, room_number)])
+    global player_map
+    global maze_finished
     # if the node hasn't been added to the visited add it(don't worry otherwise it isn't the )
+    # if the queue is empty the entire maze has been walked it lets the program know it is done walking
     while paths_walked.size() > 0:
         path = paths_walked.dequeue()
-        # first index direction to travel, second is destination
+
+        # current_room_tuple first index is direction to travel, second is destination
         current_room_tuple = path[-1]
         current_room_id = current_room_tuple[1]
 
         if current_room_id in visited:
             # stops this iteration. The loop will continue with next path
             continue
-        # add it to my list of visited nodes
+        # updates the visited list with the current room
         visited[current_room_id] = path
-        # lets look at all the friends that friend has and if we haven't visited them
-        # player_map example {0: {'n': '?', 's': '?', 'w': '?', 'e': '?'}}
-        global player_map
-        # print("I hate my life")
-        # print(player_map)
-        # for key in player_map:
-        #     print(key)
-
-        for room_door_dict in player_map[current_room_id]:
-            print(f"room_door_dict:{room_door_dict}")
-            for direction in room_door_dict:
-                print(f"direction:{direction}")
-                new_room_id = room_door_dict[direction]
-                path_copy = path.copy()
-                if new_room_id == '?':
-                    directions = []
-                    for n in path_copy:
+        # For each direction in the map it checks to see if it is unexplored. It is it returns the path
+        # If it is it processess the tuples and returns directions to it
+        # if it isn't it appends all the paths to adjacent rooms
+        for direction in player_map[current_room_id]:
+            new_room_id = player_map[current_room_id][direction]
+            path_copy = path.copy()
+            if new_room_id == '?':
+                directions = []
+                for n in path_copy:
+                    if n[0] != None:
                         directions.append(n[0])
-                    return directions
-                if new_room_id != None:
-                    path_copy.append((direction, new_room_id))
-                    paths_walked.enqueue(path_copy)
-    return False
+                return directions
+            if new_room_id != None:
+                path_copy.append((direction, new_room_id))
+                paths_walked.enqueue(path_copy)
+    maze_finished = True
+    return []
 
 
+# Here I traverse the graph
+#
 updateMap()
-print(player_map)
-travel('n')
-print(player_map)
-travel(facing)
-print(player_map)
-print(facing)
-turnRight()
-print(facing)
-find_unknown_path(player.current_room.id)
+# Maze finished fires when my search algorithm can't find an unexplored room
+while not maze_finished:
+    # Moves in a direction if it hasn't gone there before
+    if 'w' in player_map[player.current_room.id] and player_map[player.current_room.id]['w'] == '?':
+        travel('w')
+    elif 's' in player_map[player.current_room.id] and player_map[player.current_room.id]['s'] == '?':
+        travel('s')
+    elif 'n' in player_map[player.current_room.id] and player_map[player.current_room.id]['n'] == '?':
+        travel('n')
+    elif 'e' in player_map[player.current_room.id] and player_map[player.current_room.id]['e'] == '?':
+        travel('e')
+    else:
+        # If it has been to all the surrounding rooms it gets a path to the nearest room that has an unexplored door
+        for direction in find_unknown_path(player.current_room.id):
+            travel(direction)
+
 
 # I need a function that takes an array with the shortest path
 #  and walks the player to the room
